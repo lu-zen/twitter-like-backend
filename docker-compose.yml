@@ -1,0 +1,38 @@
+version: "3.3"
+services:
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    image: twitter-like-backend
+    env_file: .env
+    environment:
+      - DB_HOST=$DB_HOST
+      - DB_PORT=$DB_PORT
+      - KEY_SECRET=$KEY_SECRET
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./api/src:/home/node/app/src
+    restart: unless-stopped
+    depends_on: [db]
+    networks:
+      - app-network
+    command: ./wait-for.sh db:8529 -- yarn start
+
+  db:
+    image: arangodb:latest
+    container_name: db
+    restart: unless-stopped
+    environment:
+      - ARANGO_NO_AUTH=1
+    ports:
+      - "127.0.0.1:3005:8529"
+    volumes:
+      - ./arangoData:/var/lib/arangodb3
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
